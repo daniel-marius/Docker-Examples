@@ -1,0 +1,39 @@
+sudo: required
+services:
+  - docker
+
+language: generic
+
+before_install:
+  - docker build -t daniel/react -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true daniel/react npm run test
+
+after_success:
+  - docker -t daniel/multi-client build ./client
+  - docker -t daniel/multi-nginx build ./nginx
+  - docker -t daniel/multi-server build ./server
+  - docker -t daniel/multi-worker build ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push daniel/multi-client
+  - docker push daniel/multi-nginx
+  - docker push daniel/multi-server
+  - docker push daniel/multi-worker
+
+deploy:
+  edge: true
+  provider: elasticbeanstalk
+  region: "eu-west-1"
+  app: "multi-docker"
+  env: "MultiDocker-env"
+  bucket_name: "elasticbeanstalk-eu-west-1-245634249045"
+  bucket_path: "multi-docker"
+  on:
+    branch: master
+  access_key_id:
+    secure: "$AWS_ACCESS_KEY"
+  secret_access_key:
+    secure: "$AWS_SECRET_KEY"

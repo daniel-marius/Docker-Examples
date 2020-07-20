@@ -1,0 +1,9 @@
+docker -t mycont/simpleweb build .
+
+docker run mycont/simpleweb
+
+docker run -p 4000:8080 mycont/simpleweb
+
+docker run -it mycont/simpleweb sh
+
+docker exec -it mycont/simpleweb sh
